@@ -18,7 +18,10 @@ function loadRecipes() {
   }
   try { return JSON.parse(raw); } catch { return [...SEED_RECIPES]; }
 }
-function saveRecipes() { localStorage.setItem(STORE_KEY, JSON.stringify(recipes)); }
+function saveRecipes() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(recipes)); return true; }
+  catch (e) { return false; }
+}
 
 function loadPlan() {
   const raw = localStorage.getItem(PLAN_KEY);
@@ -82,8 +85,10 @@ function renderRecipes() {
     const allergenBadge = (r.allergens && r.allergens.length)
       ? `<span class="badge badge-allergen">contains ${esc(r.allergens.join(", "))}</span>`
       : `<span class="badge badge-clean">no common allergens</span>`;
+    const photo = r.photo ? `<img class="card-photo" src="${esc(r.photo)}" alt="${esc(r.name)}" loading="lazy" />` : "";
     return `
       <article class="recipe-card" data-id="${r.id}">
+        ${photo}
         <h3>${esc(r.name)}</h3>
         <div class="card-meta">
           <span class="badge badge-age">${esc(ageShort(r.age))}</span>
@@ -110,13 +115,17 @@ function openDetail(id) {
     ? `<span class="badge badge-allergen">contains ${esc(r.allergens.join(", "))}</span>`
     : `<span class="badge badge-clean">no common allergens</span>`;
 
+  const photo = r.photo ? `<img class="detail-photo" src="${esc(r.photo)}" alt="${esc(r.name)}" />` : "";
+  const source = r.source ? `<p class="detail-source">🔗 Source: <a href="${esc(r.source)}" target="_blank" rel="noopener noreferrer">${esc(r.source)}</a></p>` : "";
   $("#detailContent").innerHTML = `
+    ${photo}
     <h2>${esc(r.name)}</h2>
     <div class="detail-meta">
       <span class="badge badge-age">${esc(ageLabel(r.age))}</span>
       <span class="badge">⏱ ${esc(r.prep)} min</span>
       ${allergens}
     </div>
+    ${source}
     <div class="detail-section">
       <h4>Ingredients</h4>
       <ul>${r.ingredients.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
@@ -128,10 +137,12 @@ function openDetail(id) {
     ${r.notes ? `<div class="detail-section"><h4>Notes</h4><div class="detail-notes">${esc(r.notes)}</div></div>` : ""}
     <div class="detail-actions">
       <button class="btn btn-ghost btn-sm" id="editFromDetail">Edit</button>
+      <button class="btn btn-ghost btn-sm" id="printFromDetail">🖨 Print</button>
       <button class="btn btn-danger btn-sm" id="deleteFromDetail">Delete</button>
     </div>
   `;
   $("#editFromDetail").onclick = () => { closeModal("#detailModal"); openForm(r.id); };
+  $("#printFromDetail").onclick = () => printRecipe(r);
   $("#deleteFromDetail").onclick = () => deleteRecipe(r.id);
   openModal("#detailModal");
 }
@@ -150,9 +161,10 @@ function deleteRecipe(id) {
 }
 
 /* ---------- Add / edit form ---------- */
-function openForm(id) {
+function openForm(id, prefill) {
   const form = $("#recipeForm");
   form.reset();
+  setPhotoPreview("");
   if (id) {
     const r = findRecipe(id);
     $("#formTitle").textContent = "Edit Recipe";
@@ -163,13 +175,68 @@ function openForm(id) {
     $("#f_ingredients").value = r.ingredients.join("\n");
     $("#f_steps").value = r.steps.join("\n");
     $("#f_allergens").value = (r.allergens || []).join(", ");
+    $("#f_source").value = r.source || "";
     $("#f_notes").value = r.notes || "";
+    setPhotoPreview(r.photo || "");
   } else {
     $("#formTitle").textContent = "Add Recipe";
     $("#recipeId").value = "";
+    if (prefill) {
+      if (prefill.name) $("#f_name").value = prefill.name;
+      if (prefill.source) $("#f_source").value = prefill.source;
+      if (prefill.notes) $("#f_notes").value = prefill.notes;
+      if (prefill.photo) setPhotoPreview(prefill.photo);
+    }
   }
   openModal("#formModal");
   $("#f_name").focus();
+}
+
+/* ---------- Photo handling ---------- */
+function setPhotoPreview(dataUrl) {
+  const preview = $("#photoPreview");
+  $("#f_photo_data").value = dataUrl || "";
+  if (dataUrl) {
+    preview.innerHTML = `<img src="${esc(dataUrl)}" alt="preview" />`;
+    preview.dataset.empty = "false";
+    $("#removePhotoBtn").hidden = false;
+  } else {
+    preview.innerHTML = "<span>No photo</span>";
+    preview.dataset.empty = "true";
+    $("#removePhotoBtn").hidden = true;
+  }
+}
+
+$("#f_photo").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  compressImage(file, 900, 0.72)
+    .then(setPhotoPreview)
+    .catch(() => alert("Sorry, that image couldn't be loaded."));
+});
+$("#removePhotoBtn").addEventListener("click", () => { setPhotoPreview(""); $("#f_photo").value = ""; });
+
+// Resize/compress an image file to a JPEG data URL to keep storage small.
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else if (height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 $("#addRecipeBtn").addEventListener("click", () => openForm());
@@ -187,6 +254,8 @@ $("#recipeForm").addEventListener("submit", (e) => {
     ingredients: splitLines($("#f_ingredients").value),
     steps: splitLines($("#f_steps").value),
     allergens,
+    source: $("#f_source").value.trim(),
+    photo: $("#f_photo_data").value,
     notes: $("#f_notes").value.trim()
   };
 
@@ -195,13 +264,18 @@ $("#recipeForm").addEventListener("submit", (e) => {
     return;
   }
 
+  const snapshot = JSON.stringify(recipes);
   if (id) {
     const r = findRecipe(id);
     Object.assign(r, data);
   } else {
     recipes.push({ id: uid(), seed: false, ...data });
   }
-  saveRecipes();
+  if (!saveRecipes()) {
+    recipes = JSON.parse(snapshot); // roll back
+    alert("Couldn't save — browser storage is full. Try removing some recipe photos.");
+    return;
+  }
   closeModal("#formModal");
   renderRecipes();
 });
@@ -289,6 +363,154 @@ function renderGuide() {
     </div>
   `).join("");
 }
+
+/* ---------- Import from link ---------- */
+$("#importBtn").addEventListener("click", () => {
+  $("#importUrl").value = "";
+  $("#importStatus").textContent = "";
+  $("#importStatus").classList.remove("error");
+  openModal("#importModal");
+  $("#importUrl").focus();
+});
+
+$("#importGoBtn").addEventListener("click", importFromLink);
+$("#importUrl").addEventListener("keydown", (e) => { if (e.key === "Enter") importFromLink(); });
+
+async function importFromLink() {
+  const url = $("#importUrl").value.trim();
+  const status = $("#importStatus");
+  status.classList.remove("error");
+  if (!/^https?:\/\//i.test(url)) {
+    status.textContent = "Please paste a full link starting with http(s)://";
+    status.classList.add("error");
+    return;
+  }
+  status.textContent = "Fetching details from the link…";
+
+  let meta = null;
+  // noembed.com is a free, CORS-enabled oEmbed proxy that supports
+  // Instagram, TikTok, YouTube, Pinterest, Vimeo and many blogs.
+  try {
+    const res = await fetch("https://noembed.com/embed?url=" + encodeURIComponent(url));
+    if (res.ok) meta = await res.json();
+  } catch (e) { /* network blocked or offline — fall through */ }
+
+  closeModal("#importModal");
+
+  const prefill = { source: url };
+  if (meta && !meta.error) {
+    if (meta.title) prefill.name = meta.title;
+    if (meta.thumbnail_url) prefill.photo = meta.thumbnail_url;
+    const author = meta.author_name ? `by ${meta.author_name} ` : "";
+    prefill.notes = `Imported ${author}from ${url}`.trim();
+  } else {
+    prefill.notes = `Imported from ${url}`;
+  }
+  // Open the recipe form pre-filled; user adds ingredients & steps from the post.
+  openForm(null, prefill);
+  if (!meta || meta.error) {
+    setTimeout(() => alert("We saved the link, but couldn't auto-read the title/image for this site. Just fill in the recipe details from the post."), 50);
+  }
+}
+
+/* ---------- Shopping list ---------- */
+function plannedRecipeIds() {
+  const ids = Object.values(plan).filter(Boolean);
+  return [...new Set(ids)];
+}
+
+function buildShoppingList() {
+  const ids = plannedRecipeIds();
+  const map = new Map(); // normalized ingredient -> { text, sources:Set }
+  ids.forEach((id) => {
+    const r = findRecipe(id);
+    if (!r) return;
+    r.ingredients.forEach((ing) => {
+      const key = ing.toLowerCase().trim();
+      if (!map.has(key)) map.set(key, { text: ing, sources: new Set() });
+      map.get(key).sources.add(r.name);
+    });
+  });
+  return { items: [...map.values()].sort((a, b) => a.text.localeCompare(b.text)), recipeCount: ids.length };
+}
+
+$("#shoppingBtn").addEventListener("click", () => {
+  const { items, recipeCount } = buildShoppingList();
+  $("#shoppingSummary").textContent = recipeCount
+    ? `${items.length} ingredients across ${recipeCount} planned recipe${recipeCount === 1 ? "" : "s"}.`
+    : "Your week is empty — add some recipes to the planner first.";
+  $("#shoppingList").innerHTML = items.map((it, i) => `
+    <div class="shop-item" data-i="${i}">
+      <input type="checkbox" id="shop-${i}" />
+      <label for="shop-${i}">
+        ${esc(it.text)}
+        <span class="shop-source">${esc([...it.sources].join(", "))}</span>
+      </label>
+    </div>`).join("");
+  openModal("#shoppingModal");
+});
+
+$("#shoppingList").addEventListener("change", (e) => {
+  if (e.target.type === "checkbox") e.target.closest(".shop-item").classList.toggle("checked", e.target.checked);
+});
+
+$("#printShoppingBtn").addEventListener("click", () => {
+  const { items, recipeCount } = buildShoppingList();
+  const rows = items.map((it) => `<li>☐ ${esc(it.text)} <small style="color:#888">(${esc([...it.sources].join(", "))})</small></li>`).join("");
+  printHtml("Shopping List", `
+    <h1>🛒 Shopping List</h1>
+    <p>${recipeCount} planned recipe(s)</p>
+    <ul style="list-style:none;padding:0;line-height:2">${rows || "<li>No items.</li>"}</ul>
+  `);
+});
+
+/* ---------- Printing ---------- */
+function printHtml(title, body) {
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow pop-ups to print."); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>${esc(title)}</title>
+    <style>
+      body { font-family: system-ui, sans-serif; color: #333; max-width: 700px; margin: 30px auto; padding: 0 20px; }
+      h1 { color: #d96b51; } h2 { color: #7bb7a8; margin-top: 24px; }
+      ul, ol { padding-left: 22px; } li { margin-bottom: 6px; }
+      .meta { color: #777; font-size: 14px; }
+      table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+      td, th { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; }
+      th { background: #f6efe9; }
+    </style></head><body>${body}
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
+function printRecipe(r) {
+  printHtml(r.name, `
+    <h1>${esc(r.name)}</h1>
+    <p class="meta">Suitable from ${esc(ageLabel(r.age))} · ${esc(r.prep)} min${r.allergens && r.allergens.length ? " · contains " + esc(r.allergens.join(", ")) : ""}</p>
+    <h2>Ingredients</h2>
+    <ul>${r.ingredients.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+    <h2>Method</h2>
+    <ol>${r.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+    ${r.notes ? `<h2>Notes</h2><p>${esc(r.notes)}</p>` : ""}
+    ${r.source ? `<p class="meta">Source: ${esc(r.source)}</p>` : ""}
+  `);
+}
+
+$("#printPlanBtn").addEventListener("click", () => {
+  const rows = DAYS.map((day) => {
+    const cells = MEALS.map((meal) => {
+      const r = findRecipe(plan[`${day}|${meal}`]);
+      return `<td>${r ? esc(r.name) : "—"}</td>`;
+    }).join("");
+    return `<tr><th>${day}</th>${cells}</tr>`;
+  }).join("");
+  printHtml("Weekly Meal Plan", `
+    <h1>🍼 Weekly Meal Plan</h1>
+    <table>
+      <tr><th>Day</th>${MEALS.map((m) => `<th>${m}</th>`).join("")}</tr>
+      ${rows}
+    </table>
+  `);
+});
 
 /* ---------- Modals ---------- */
 function openModal(sel) { $(sel).hidden = false; document.body.style.overflow = "hidden"; }

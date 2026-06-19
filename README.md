@@ -9,8 +9,15 @@ no install, no internet required after the first load.
 - **Browse recipes** by age stage (around 6 months → 12+ months), with search
   by name or ingredient and a filter for allergen-free recipes.
 - **Add, edit, and delete** your own recipes.
+- **Photos** — upload a picture for any recipe (auto-resized so it stays small).
+- **Import from a link** — paste a recipe link from Instagram, TikTok, YouTube,
+  Pinterest, or a blog. The app grabs the title and cover image and pre-fills a
+  new recipe; you add the ingredients and steps from the post.
 - **Weekly meal planner** — assign recipes to breakfast, lunch, dinner, and
   snack for each day of the week.
+- **Shopping list** — automatically generated from everything in your weekly
+  plan, with tick-off checkboxes and a print option.
+- **Print** any recipe, the weekly plan, or the shopping list.
 - **Feeding guide** with verified, plain-language guidance on starting solids,
   textures, allergens, foods to avoid, and choking safety.
 - **Everything saves automatically** in your browser (localStorage), so your
@@ -22,8 +29,29 @@ no install, no internet required after the first load.
 Just open `index.html` in any modern web browser (Chrome, Safari, Firefox, Edge),
 including on a phone or tablet. That's it — no setup.
 
-To use it across devices or share it, you can host the folder on any static
-web host (e.g. GitHub Pages, Netlify, Vercel).
+### Hosted version (GitHub Pages)
+
+This repo includes a GitHub Actions workflow
+(`.github/workflows/deploy-pages.yml`) that deploys the app to GitHub Pages
+automatically on every push. Once it runs, the app is available at:
+
+```
+https://<your-github-username>.github.io/<repo-name>/
+```
+
+The workflow attempts to enable Pages for you. If deployment is blocked, enable
+it manually under **Settings → Pages → Build and deployment → Source: GitHub
+Actions** and re-run the workflow.
+
+### A note on the link importer
+
+The importer runs entirely in your browser and uses a free, CORS-enabled oEmbed
+service to read a post's title and cover image — that's the information most
+social platforms expose publicly. Reading the full ingredient/step list out of a
+photo or video isn't possible from a static site without a backend and an AI
+service, so those fields are left for you to fill in (this keeps the app free,
+private, and account-free). If you'd like full AI-powered extraction later, that
+would require adding a small server component.
 
 ## About the information
 

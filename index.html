@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Little Bites — Baby Recipes & Meal Planner</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍼</text></svg>" />
 </head>
@@ -37,6 +36,7 @@
           <option value="">All recipes</option>
           <option value="none">Allergen-free only</option>
         </select>
+        <button id="importBtn" class="btn btn-accent">↧ Import from link</button>
         <button id="addRecipeBtn" class="btn btn-primary">+ Add Recipe</button>
       </div>
 
@@ -49,7 +49,11 @@
     <section id="view-planner" class="view">
       <div class="toolbar planner-toolbar">
         <h2>This week's plan</h2>
-        <button id="clearPlanBtn" class="btn btn-ghost">Clear week</button>
+        <div class="toolbar-actions">
+          <button id="shoppingBtn" class="btn btn-accent">🛒 Shopping list</button>
+          <button id="printPlanBtn" class="btn btn-ghost">🖨 Print plan</button>
+          <button id="clearPlanBtn" class="btn btn-ghost">Clear week</button>
+        </div>
       </div>
       <p class="hint">Click any empty slot to assign a recipe. Babies usually start with 1 meal a day around 6 months, building toward 3 meals plus snacks by 9–12 months.</p>
       <div class="planner" id="planner"></div>
@@ -77,8 +81,23 @@
       <h2 id="formTitle">Add Recipe</h2>
       <form id="recipeForm" class="recipe-form">
         <input type="hidden" id="recipeId" />
+
+        <div class="photo-field">
+          <div class="photo-preview" id="photoPreview" data-empty="true">
+            <span>No photo</span>
+          </div>
+          <div class="photo-controls">
+            <label class="btn btn-ghost btn-sm photo-upload">
+              📷 Upload photo
+              <input type="file" id="f_photo" accept="image/*" hidden />
+            </label>
+            <button type="button" class="btn btn-ghost btn-sm" id="removePhotoBtn" hidden>Remove photo</button>
+            <input type="hidden" id="f_photo_data" />
+          </div>
+        </div>
+
         <label>Recipe name
-          <input type="text" id="f_name" required maxlength="80" placeholder="e.g. Banana & Avocado Mash" />
+          <input type="text" id="f_name" required maxlength="120" placeholder="e.g. Banana & Avocado Mash" />
         </label>
         <div class="form-row">
           <label>Suitable from
@@ -97,6 +116,9 @@
         <label>Allergens present (comma separated, leave blank if none)
           <input type="text" id="f_allergens" placeholder="e.g. dairy, egg, gluten" />
         </label>
+        <label>Source link (optional)
+          <input type="url" id="f_source" placeholder="https://… (Instagram, TikTok, YouTube, blog)" />
+        </label>
         <label>Notes (optional)
           <textarea id="f_notes" rows="2" placeholder="Storage, texture tips, variations…"></textarea>
         </label>
@@ -108,6 +130,20 @@
     </div>
   </div>
 
+  <!-- IMPORT FROM LINK MODAL -->
+  <div class="modal-backdrop" id="importModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Import from a link</h2>
+      <p class="hint">Paste a recipe link from Instagram, TikTok, YouTube, Pinterest or a blog. We'll grab the title and cover image and pre-fill a new recipe — then you add the ingredients and steps from the post.</p>
+      <div class="import-row">
+        <input type="url" id="importUrl" class="search" placeholder="https://…" />
+        <button id="importGoBtn" class="btn btn-primary">Fetch</button>
+      </div>
+      <p class="import-status" id="importStatus"></p>
+    </div>
+  </div>
+
   <!-- ASSIGN RECIPE TO SLOT MODAL -->
   <div class="modal-backdrop" id="assignModal" hidden>
     <div class="modal" role="dialog" aria-modal="true">
@@ -116,6 +152,19 @@
       <p id="assignSlotLabel" class="hint"></p>
       <input type="search" id="assignSearch" class="search" placeholder="Search recipes…" />
       <div class="assign-list" id="assignList"></div>
+    </div>
+  </div>
+
+  <!-- SHOPPING LIST MODAL -->
+  <div class="modal-backdrop" id="shoppingModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <div class="shopping-head">
+        <h2>Shopping list</h2>
+        <button id="printShoppingBtn" class="btn btn-ghost btn-sm">🖨 Print</button>
+      </div>
+      <p class="hint" id="shoppingSummary"></p>
+      <div class="shopping-list" id="shoppingList"></div>
     </div>
   </div>
 
