@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Little Bites — Baby Recipes & Meal Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍼</text></svg>" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-logo">🍼</span>
+      <div>
+        <h1>Little Bites</h1>
+        <p class="tagline">Baby recipes & weekly meal planner</p>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="recipes">Recipes</button>
+      <button class="tab" data-view="planner">Meal Planner</button>
+      <button class="tab" data-view="safety">Feeding Guide</button>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- RECIPES VIEW -->
+    <section id="view-recipes" class="view active">
+      <div class="toolbar">
+        <input type="search" id="searchInput" class="search" placeholder="Search recipes or ingredients…" />
+        <select id="ageFilter" class="select">
+          <option value="">All ages</option>
+        </select>
+        <select id="allergenFilter" class="select">
+          <option value="">All recipes</option>
+          <option value="none">Allergen-free only</option>
+        </select>
+        <button id="addRecipeBtn" class="btn btn-primary">+ Add Recipe</button>
+      </div>
+
+      <p class="result-count" id="resultCount"></p>
+      <div class="recipe-grid" id="recipeGrid"></div>
+      <p class="empty-state" id="emptyState" hidden>No recipes match your search. Try clearing the filters or adding a new recipe.</p>
+    </section>
+
+    <!-- PLANNER VIEW -->
+    <section id="view-planner" class="view">
+      <div class="toolbar planner-toolbar">
+        <h2>This week's plan</h2>
+        <button id="clearPlanBtn" class="btn btn-ghost">Clear week</button>
+      </div>
+      <p class="hint">Click any empty slot to assign a recipe. Babies usually start with 1 meal a day around 6 months, building toward 3 meals plus snacks by 9–12 months.</p>
+      <div class="planner" id="planner"></div>
+    </section>
+
+    <!-- SAFETY / GUIDE VIEW -->
+    <section id="view-safety" class="view">
+      <div class="guide" id="guideContent"></div>
+    </section>
+
+  </main>
+
+  <!-- RECIPE DETAIL MODAL -->
+  <div class="modal-backdrop" id="detailModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- ADD/EDIT RECIPE MODAL -->
+  <div class="modal-backdrop" id="formModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h2 id="formTitle">Add Recipe</h2>
+      <form id="recipeForm" class="recipe-form">
+        <input type="hidden" id="recipeId" />
+        <label>Recipe name
+          <input type="text" id="f_name" required maxlength="80" placeholder="e.g. Banana & Avocado Mash" />
+        </label>
+        <div class="form-row">
+          <label>Suitable from
+            <select id="f_age" required></select>
+          </label>
+          <label>Prep time (min)
+            <input type="number" id="f_prep" min="0" max="240" value="10" />
+          </label>
+        </div>
+        <label>Ingredients (one per line)
+          <textarea id="f_ingredients" rows="5" required placeholder="1 ripe banana&#10;1/2 ripe avocado"></textarea>
+        </label>
+        <label>Steps (one per line)
+          <textarea id="f_steps" rows="5" required placeholder="Peel and mash the banana&#10;Add avocado and mix until smooth"></textarea>
+        </label>
+        <label>Allergens present (comma separated, leave blank if none)
+          <input type="text" id="f_allergens" placeholder="e.g. dairy, egg, gluten" />
+        </label>
+        <label>Notes (optional)
+          <textarea id="f_notes" rows="2" placeholder="Storage, texture tips, variations…"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Recipe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ASSIGN RECIPE TO SLOT MODAL -->
+  <div class="modal-backdrop" id="assignModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Assign a recipe</h2>
+      <p id="assignSlotLabel" class="hint"></p>
+      <input type="search" id="assignSearch" class="search" placeholder="Search recipes…" />
+      <div class="assign-list" id="assignList"></div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p><strong>Disclaimer:</strong> Little Bites offers general guidance based on widely published infant-feeding advice (AAP, NHS, WHO). It is not medical advice. Every baby is different — talk to your pediatrician about your child's diet, allergies, and readiness for solids.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
