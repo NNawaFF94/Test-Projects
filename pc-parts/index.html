@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Inside the Case</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: service-manual workbench — a cutaway schematic of the case on the left, the reference sheet for whatever you touch on the right. */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FFFFFF;
+  --ink: #132030;
+  --muted: #5A6777;
+  --line: #CDD4DC;
+  --copper: #B4561F;
+  --copper-soft: #F4E3D7;
+  --signal: #1C6AD0;
+  --signal-soft: #DDE9F8;
+  --good: #23824F;
+  --bad: #B83A3A;
+
+  --case: #DDE3E9;
+  --case-deep: #CFD6DE;
+  --board: #C7D5CE;
+  --trace: #A9BDB3;
+  --comp: #445366;
+  --comp-2: #5C6C80;
+  --metal: #9AA6B3;
+  --chip: #26313E;
+  --label-halo: #DDE3E9;
+
+  --f-display: "Chakra Petch", "Bahnschrift", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1319; --surface: #151C24; --ink: #E5EAF0; --muted: #93A0AF; --line: #2A3542;
+    --copper: #E68A50; --copper-soft: #3A2619; --signal: #5EA4FF; --signal-soft: #17283E;
+    --good: #4CC583; --bad: #F07272;
+    --case: #1A222C; --case-deep: #141B23; --board: #1F2E2A; --trace: #2D4640;
+    --comp: #3B4A5D; --comp-2: #4C5D72; --metal: #6B7887; --chip: #0B1016; --label-halo: #1A222C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1319; --surface: #151C24; --ink: #E5EAF0; --muted: #93A0AF; --line: #2A3542;
+  --copper: #E68A50; --copper-soft: #3A2619; --signal: #5EA4FF; --signal-soft: #17283E;
+  --good: #4CC583; --bad: #F07272;
+  --case: #1A222C; --case-deep: #141B23; --board: #1F2E2A; --trace: #2D4640;
+  --comp: #3B4A5D; --comp-2: #4C5D72; --metal: #6B7887; --chip: #0B1016; --label-halo: #1A222C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); }
+body {
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.app { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.app > * { min-width: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+.brand { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.brand svg { flex: none; }
+.brand h1 { font-size: 30px; font-weight: 700; line-height: 1.05; }
+.brand p { color: var(--muted); font-size: 14px; }
+.tabs-wrap { overflow-x: auto; max-width: 100%; min-width: 0; }
+.tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--case); border: 1px solid var(--line); border-radius: 9px; }
+.tab {
+  border: 0; background: transparent; padding: 7px 13px; border-radius: 7px; cursor: pointer;
+  font-family: var(--f-mono); font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; color: var(--muted);
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.figure { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 10px; min-width: 0; }
+.diagram-box { background: var(--case-deep); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+svg.diagram { display: block; width: 100%; height: auto; max-height: calc(100vh - 170px); touch-action: manipulation; }
+.figbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hoverline { font-size: 13.5px; color: var(--muted); min-height: 1.5em; min-width: 0; }
+.hoverline b { color: var(--ink); font-weight: 600; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--muted); cursor: pointer; text-transform: uppercase; letter-spacing: .05em; }
+.toggle input { accent-color: var(--copper); }
+
+/* Diagram parts */
+.part { cursor: pointer; transition: opacity .25s ease; }
+.part:hover .hl, .part:focus-visible .hl { stroke: var(--copper); stroke-width: 2.5; }
+.part:focus { outline: none; }
+.diagram.dim .part:not(.is-on) { opacity: .38; }
+.diagram.dim .cable:not(.is-on) { opacity: .15; }
+.diagram[data-mode="heat"] .part[data-score="1"] { opacity: .16; }
+.diagram[data-mode="heat"] .part[data-score="2"] { opacity: .34; }
+.diagram[data-mode="heat"] .part[data-score="3"] { opacity: .6; }
+.diagram[data-mode="heat"] .part[data-score="4"] { opacity: .85; }
+.diagram[data-mode="heat"] .part[data-score="5"] { opacity: 1; }
+.cable { pointer-events: none; fill: none; stroke: var(--metal); stroke-width: 5; stroke-linecap: round; opacity: .55; transition: opacity .25s, stroke .25s; }
+.cable.is-on { stroke: var(--copper); opacity: 1; }
+.lbl { font-family: var(--f-mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--label-halo); stroke-width: 5px; stroke-linejoin: round; pointer-events: none; letter-spacing: .03em; }
+.labels-off .lbl { display: none; }
+.frame { fill: none; stroke: var(--copper); stroke-width: 2; stroke-dasharray: 7 5; pointer-events: none; }
+.tick { fill: var(--copper); pointer-events: none; }
+.flow { fill: none; stroke-width: 2; stroke-dasharray: 5 11; opacity: .7; animation: flow 1.6s linear infinite; pointer-events: none; }
+.flow.cool { stroke: var(--signal); }
+.flow.warm { stroke: var(--copper); }
+.spin { transform-box: fill-box; transform-origin: center; animation: spin 2.4s linear infinite; }
+.spin.fast { animation-duration: .9s; }
+.packet { fill: var(--signal); }
+.packet-ring { fill: none; stroke: var(--signal); stroke-width: 2; opacity: .45; }
+@keyframes flow { to { stroke-dashoffset: -32; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .flow, .spin { animation: none; }
+}
+
+/* Panels */
+.panel { display: grid; gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); }
+.part-head { display: grid; gap: 6px; }
+.part-head h2 { font-size: 34px; font-weight: 700; line-height: 1.05; }
+.analogy { font-size: 17px; color: var(--muted); max-width: 60ch; }
+.analogy b { color: var(--ink); font-weight: 600; }
+.section { display: grid; gap: 10px; }
+.section h3 { font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.how { display: grid; gap: 10px; max-width: 64ch; }
+.how p { font-size: 15.5px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.steps li::before { counter-increment: s; content: counter(s); font-family: var(--f-mono); font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--signal-soft); color: var(--signal); margin-top: 1px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; vertical-align: top; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--f-mono); font-size: 11.5px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); font-size: 13.5px; }
+td.m { color: var(--muted); min-width: 180px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 13px; cursor: pointer;
+  display: inline-flex; gap: 6px; align-items: center;
+}
+.chip:hover { border-color: var(--copper); }
+.chip small { color: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.note { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; background: var(--surface); display: grid; gap: 6px; align-content: start; }
+.note .k { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; }
+.note.tip .k { color: var(--good); }
+.note.myth .k { color: var(--copper); }
+.note p { font-size: 14.5px; }
+.note .myth-claim { text-decoration: line-through; text-decoration-color: var(--copper); color: var(--muted); }
+
+.parts-index { display: flex; flex-wrap: wrap; gap: 6px; }
+.parts-index .chip[aria-current="true"] { background: var(--copper); border-color: var(--copper); color: #fff; }
+
+/* Journey */
+.journey-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; }
+.journey-card h2 { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.journey-card .body { font-size: 16px; max-width: 60ch; }
+.fact { font-family: var(--f-mono); font-size: 13px; color: var(--signal); background: var(--signal-soft); border-radius: 8px; padding: 8px 11px; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn:disabled { opacity: .4; cursor: default; }
+.dots { display: flex; gap: 6px; margin-left: auto; }
+.dot { width: 26px; height: 6px; border-radius: 3px; background: var(--line); border: 0; cursor: pointer; padding: 0; }
+.dot[aria-current="true"] { background: var(--signal); }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.timeline button { width: 100%; text-align: left; border: 0; background: transparent; padding: 7px 10px; border-radius: 7px; cursor: pointer; display: grid; grid-template-columns: 56px 1fr; gap: 10px; font-size: 14px; color: var(--muted); }
+.timeline button:hover { background: var(--case); color: var(--ink); }
+.timeline button[aria-current="true"] { background: var(--signal-soft); color: var(--ink); }
+.timeline .t { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+
+/* Priorities */
+.uses { display: flex; flex-wrap: wrap; gap: 6px; }
+.prio { display: grid; gap: 4px; }
+.prio-row { display: grid; grid-template-columns: 130px 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); cursor: pointer; background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; width: 100%; }
+.prio-row:hover .pn { color: var(--copper); }
+.pn { font-weight: 500; font-size: 14.5px; }
+.pips { display: flex; gap: 4px; align-items: center; min-width: 0; }
+.pip { width: 22px; height: 10px; border-radius: 2px; background: var(--line); flex: none; }
+.pip.on { background: var(--copper); }
+.pips .why { font-size: 13px; color: var(--muted); margin-left: 8px; min-width: 0; }
+.summary { font-size: 16.5px; max-width: 62ch; }
+
+/* Full-width views */
+.wide { display: grid; gap: 20px; max-width: 980px; }
+.wide h2 { font-size: 32px; font-weight: 700; line-height: 1.08; }
+.lede { font-size: 16.5px; color: var(--muted); max-width: 66ch; }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px 14px; overflow-x: auto; }
+.chart-inner { min-width: 620px; display: grid; gap: 0; }
+.crow { display: grid; grid-template-columns: 180px 1fr 140px; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.crow:last-of-type { border-bottom: 0; }
+.crow .name { font-weight: 500; font-size: 14.5px; }
+.crow .name small { display: block; font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 22px; }
+.track .grid { position: absolute; top: -8px; bottom: -8px; width: 1px; background: var(--line); }
+.bar { position: absolute; left: 0; top: 4px; height: 14px; border-radius: 0 3px 3px 0; background: var(--signal); min-width: 4px; }
+.bar.slow { background: var(--copper); }
+.bar::after { content: ""; position: absolute; right: -4px; top: -3px; width: 8px; height: 20px; border-radius: 2px; background: inherit; }
+.human { font-family: var(--f-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; text-align: right; }
+.axis { display: grid; grid-template-columns: 180px 1fr 140px; gap: 14px; padding-top: 6px; }
+.axis .scale { position: relative; height: 18px; }
+.axis .scale span { position: absolute; transform: translateX(-50%); font-family: var(--f-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.footnote { font-size: 13px; color: var(--muted); max-width: 72ch; }
+
+/* Quiz */
+.quiz { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 16px; max-width: 760px; }
+.qmeta { display: flex; justify-content: space-between; gap: 10px; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress div { height: 100%; background: var(--copper); transition: width .3s; }
+.quiz h3 { font-size: 22px; font-weight: 600; line-height: 1.25; }
+.opts { display: grid; gap: 8px; }
+.opt { text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 9px; padding: 11px 14px; cursor: pointer; font-size: 15px; display: grid; grid-template-columns: 26px 1fr; gap: 8px; }
+.opt .letter { font-family: var(--f-mono); color: var(--muted); }
+.opt:hover:not(:disabled) { border-color: var(--ink); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface)); }
+.opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.explain { border-left: 3px solid var(--signal); padding: 4px 0 4px 12px; font-size: 15px; }
+.explain b { font-weight: 600; }
+.score-big { font-family: var(--f-display); font-size: 56px; font-weight: 700; line-height: 1; }
+
+@media (max-width: 900px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .figure { position: static; }
+  svg.diagram { max-height: 62vh; }
+}
+@media (max-width: 520px) {
+  .brand h1 { font-size: 25px; }
+  .part-head h2 { font-size: 28px; }
+  .prio-row { grid-template-columns: 100px 1fr; }
+  .pips .why { display: none; }
+  .journey-card { padding: 16px; }
+  .quiz { padding: 16px; }
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+        <rect x="9" y="9" width="26" height="26" rx="3" fill="var(--chip)"/>
+        <rect x="15" y="15" width="14" height="14" rx="1.5" fill="var(--copper)"/>
+        <g stroke="var(--muted)" stroke-width="2" stroke-linecap="round">
+          <path d="M15 3v5M22 3v5M29 3v5M15 36v5M22 36v5M29 36v5M3 15h5M3 22h5M3 29h5M36 15h5M36 22h5M36 29h5"/>
+        </g>
+      </svg>
+      <div>
+        <h1>Inside the Case</h1>
+        <p>How every part of a PC works, and how they work together</p>
+      </div>
+    </div>
+    <div class="tabs-wrap">
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" data-view="explore" aria-selected="true">Explore parts</button>
+        <button class="tab" role="tab" data-view="journey" aria-selected="false">Data journey</button>
+        <button class="tab" role="tab" data-view="speed" aria-selected="false">Speed scale</button>
+        <button class="tab" role="tab" data-view="priorities" aria-selected="false">What matters</button>
+        <button class="tab" role="tab" data-view="quiz" aria-selected="false">Quiz</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" id="stage">
+      <div class="figure">
+        <div class="diagram-box">
+          <svg class="diagram" id="diagram" viewBox="0 0 760 820" role="group" aria-label="Cutaway of a desktop PC. Select a part to learn how it works.">
+            <!-- case shell -->
+            <rect x="8" y="8" width="744" height="804" rx="18" fill="var(--case)" stroke="var(--line)" stroke-width="2"/>
+            <rect x="22" y="604" width="716" height="196" rx="8" fill="var(--case-deep)"/>
+            <text x="34" y="596" class="lbl" style="font-size:11px;fill:var(--muted)">PSU SHROUD</text>
+
+            <!-- airflow -->
+            <path class="flow cool" d="M598 130 C520 140, 470 120, 360 150"/>
+            <path class="flow cool" d="M598 300 C540 300, 520 290, 480 285"/>
+            <path class="flow cool" d="M598 470 C590 480, 585 490, 575 500"/>
+            <path class="flow warm" d="M170 90 C120 90, 80 100, 40 110"/>
+            <path class="flow warm" d="M170 150 C120 150, 80 140, 40 140"/>
+
+            <!-- motherboard -->
+            <g class="part" data-part="motherboard" tabindex="0" role="button" aria-label="Motherboard">
+              <rect class="hl" x="60" y="40" width="440" height="530" rx="6" fill="var(--board)" stroke="var(--trace)" stroke-width="1.5"/>
+              <g stroke="var(--trace)" stroke-width="1.4" fill="none">
+                <path d="M120 290 H350 V340"/><path d="M130 284 H356 V338"/>
+                <path d="M340 190 H362"/><path d="M340 200 H362"/><path d="M340 210 H362"/><path d="M340 220 H362"/>
+                <path d="M300 280 V292"/><path d="M420 470 V488"/><path d="M430 470 V488"/>
+                <path d="M200 480 H380 V505"/><path d="M200 490 H372"/>
+                <path d="M100 540 H470"/><path d="M110 550 H460"/>
+              </g>
+              <g fill="var(--trace)">
+                <circle cx="76" cy="56" r="5"/><circle cx="484" cy="56" r="5"/><circle cx="76" cy="554" r="5"/><circle cx="484" cy="554" r="5"/><circle cx="350" cy="56" r="5"/><circle cx="350" cy="554" r="5"/>
+              </g>
+              <!-- rear I/O -->
+              <rect id="io" x="60" y="56" width="34" height="200" rx="2" fill="var(--comp)"/>
+              <g fill="var(--metal)"><rect x="66" y="70" width="22" height="12" rx="2"/><rect x="66" y="90" width="22" height="12" rx="2"/><rect x="66" y="110" width="22" height="12" rx="2"/><rect x="66" y="134" width="22" height="18" rx="2"/><rect x="66" y="162" width="22" height="12" rx="2"/><rect x="66" y="182" width="22" height="12" rx="2"/><circle cx="77" cy="214" r="5"/><circle cx="77" cy="232" r="5"/></g>
+              <!-- VRM heatsinks -->
+              <rect x="110" y="60" width="160" height="26" rx="3" fill="var(--comp-2)"/>
+              <rect x="110" y="94" width="40" height="150" rx="3" fill="var(--comp-2)"/>
+              <!-- DIMM slots -->
+              <g fill="var(--comp)"><rect x="366" y="66" width="20" height="268" rx="2"/><rect x="384" y="66" width="20" height="268" rx="2"/><rect x="402" y="66" width="20" height="268" rx="2"/><rect x="420" y="66" width="20" height="268" rx="2"/></g>
+              <!-- 24-pin -->
+              <rect id="atx24" x="468" y="150" width="20" height="110" rx="2" fill="var(--comp)"/>
+              <!-- PCIe slots -->
+              <rect x="110" y="352" width="300" height="10" rx="2" fill="var(--comp)"/>
+              <rect x="110" y="508" width="230" height="9" rx="2" fill="var(--comp)"/>
+              <!-- SATA ports -->
+              <g fill="var(--comp)"><rect x="476" y="420" width="16" height="12" rx="1"/><rect x="476" y="438" width="16" height="12" rx="1"/><rect x="476" y="456" width="16" height="12" rx="1"/></g>
+            </g>
+
+            <!-- chipset -->
+            <g class="part" data-part="chipset" tabindex="0" role="button" aria-label="Chipset">
+              <rect class="hl" x="380" y="484" width="78" height="56" rx="5" fill="var(--metal)"/>
+              <g stroke="var(--comp-2)" stroke-width="2"><path d="M388 494 H450"/><path d="M388 504 H450"/><path d="M388 514 H450"/><path d="M388 524 H450"/></g>
+            </g>
+
+            <!-- CMOS battery -->
+            <g class="part" data-part="cmos" tabindex="0" role="button" aria-label="CMOS battery">
+              <circle class="hl" cx="160" cy="530" r="20" fill="var(--metal)" stroke="var(--comp-2)" stroke-width="2"/>
+              <circle cx="160" cy="530" r="12" fill="none" stroke="var(--comp-2)" stroke-width="1.5"/>
+              <text x="160" y="534" text-anchor="middle" style="font: 600 10px var(--f-mono); fill: var(--chip)">+</text>
+            </g>
+
+            <!-- CPU cooler -->
+            <g class="part" data-part="cooler" tabindex="0" role="button" aria-label="CPU cooler">
+              <rect class="hl" x="166" y="96" width="178" height="178" rx="10" fill="var(--metal)"/>
+              <g stroke="var(--comp-2)" stroke-width="2.2">
+                <path d="M180 106 V140M192 106 V140M204 106 V140M216 106 V140M228 106 V140M240 106 V140M252 106 V140M264 106 V140M276 106 V140M288 106 V140M300 106 V140M312 106 V140M324 106 V140"/>
+                <path d="M180 230 V264M192 230 V264M204 230 V264M216 230 V264M228 230 V264M240 230 V264M252 230 V264M264 230 V264M276 230 V264M288 230 V264M300 230 V264M312 230 V264M324 230 V264"/>
+              </g>
+              <g stroke="var(--copper)" stroke-width="5" stroke-linecap="round" fill="none" opacity=".85">
+                <path d="M222 185 C185 185, 182 150, 182 112"/><path d="M288 185 C325 185, 328 150, 328 112"/>
+                <path d="M222 200 C185 200, 182 230, 182 258"/><path d="M288 200 C325 200, 328 230, 328 258"/>
+              </g>
+            </g>
+
+            <!-- CPU -->
+            <g class="part" data-part="cpu" tabindex="0" role="button" aria-label="CPU">
+              <rect class="hl" x="212" y="146" width="86" height="86" rx="5" fill="var(--chip)"/>
+              <rect x="224" y="158" width="62" height="62" rx="3" fill="var(--comp-2)"/>
+              <text x="255" y="194" text-anchor="middle" style="font: 600 15px var(--f-display); fill: var(--case)">CPU</text>
+            </g>
+
+            <!-- RAM -->
+            <g class="part" data-part="ram" tabindex="0" role="button" aria-label="RAM">
+              <rect class="hl" x="368" y="70" width="16" height="260" rx="2" fill="var(--copper)"/>
+              <rect class="hl" x="404" y="70" width="16" height="260" rx="2" fill="var(--copper)"/>
+              <g fill="var(--chip)">
+                <rect x="371" y="84" width="10" height="26"/><rect x="371" y="118" width="10" height="26"/><rect x="371" y="152" width="10" height="26"/><rect x="371" y="186" width="10" height="26"/><rect x="371" y="220" width="10" height="26"/><rect x="371" y="254" width="10" height="26"/><rect x="371" y="288" width="10" height="26"/>
+                <rect x="407" y="84" width="10" height="26"/><rect x="407" y="118" width="10" height="26"/><rect x="407" y="152" width="10" height="26"/><rect x="407" y="186" width="10" height="26"/><rect x="407" y="220" width="10" height="26"/><rect x="407" y="254" width="10" height="26"/><rect x="407" y="288" width="10" height="26"/>
+              </g>
+            </g>
+
+            <!-- NVMe SSD -->
+            <g class="part" data-part="ssd" tabindex="0" role="button" aria-label="NVMe SSD">
+              <rect class="hl" x="120" y="296" width="210" height="30" rx="3" fill="var(--chip)"/>
+              <rect x="128" y="302" width="34" height="18" rx="1" fill="var(--comp-2)"/>
+              <rect x="170" y="302" width="44" height="18" rx="1" fill="var(--comp)"/>
+              <rect x="222" y="302" width="44" height="18" rx="1" fill="var(--comp)"/>
+              <rect x="274" y="302" width="44" height="18" rx="1" fill="var(--comp)"/>
+            </g>
+
+            <!-- GPU -->
+            <g class="part" data-part="gpu" tabindex="0" role="button" aria-label="Graphics card">
+              <rect id="gpu-out" x="40" y="352" width="12" height="132" rx="2" fill="var(--metal)"/>
+              <rect class="hl" x="50" y="362" width="522" height="112" rx="10" fill="var(--comp)"/>
+              <rect x="50" y="362" width="522" height="10" rx="4" fill="var(--comp-2)"/>
+              <rect id="gpu-pwr" x="470" y="356" width="34" height="10" rx="2" fill="var(--chip)"/>
+              <g>
+                <circle cx="210" cy="420" r="44" fill="var(--chip)"/>
+                <g class="spin fast"><circle cx="210" cy="420" r="40" fill="none"/>
+                  <path d="M210 420 L210 382 A12 12 0 0 1 226 388 Z M210 420 L248 420 A12 12 0 0 1 242 436 Z M210 420 L210 458 A12 12 0 0 1 194 452 Z M210 420 L172 420 A12 12 0 0 1 178 404 Z" fill="var(--comp-2)"/></g>
+                <circle cx="210" cy="420" r="9" fill="var(--comp)"/>
+                <circle cx="410" cy="420" r="44" fill="var(--chip)"/>
+                <g class="spin fast"><circle cx="410" cy="420" r="40" fill="none"/>
+                  <path d="M410 420 L410 382 A12 12 0 0 1 426 388 Z M410 420 L448 420 A12 12 0 0 1 442 436 Z M410 420 L410 458 A12 12 0 0 1 394 452 Z M410 420 L372 420 A12 12 0 0 1 378 404 Z" fill="var(--comp-2)"/></g>
+                <circle cx="410" cy="420" r="9" fill="var(--comp)"/>
+              </g>
+            </g>
+
+            <!-- fans (front intake + rear exhaust) -->
+            <g class="part" data-part="fans" tabindex="0" role="button" aria-label="Case fans">
+              <rect class="hl" x="24" y="64" width="16" height="122" rx="3" fill="var(--comp)"/>
+              <g stroke="var(--metal)" stroke-width="2"><path d="M28 80 L36 92M28 100 L36 112M28 120 L36 132M28 140 L36 152M28 160 L36 172"/></g>
+              <g>
+                <rect class="hl" x="600" y="60" width="132" height="132" rx="12" fill="var(--comp)"/>
+                <g class="spin"><circle cx="666" cy="126" r="58" fill="none"/>
+                  <path d="M666 126 C650 96, 666 72, 690 76 C680 98, 676 112, 666 126 Z M666 126 C698 124, 712 146, 700 168 C682 154, 672 142, 666 126 Z M666 126 C648 152, 620 150, 612 128 C636 124, 652 126, 666 126 Z" fill="var(--comp-2)"/></g>
+                <circle cx="666" cy="126" r="12" fill="var(--chip)"/>
+              </g>
+              <g>
+                <rect class="hl" x="600" y="232" width="132" height="132" rx="12" fill="var(--comp)"/>
+                <g class="spin"><circle cx="666" cy="298" r="58" fill="none"/>
+                  <path d="M666 298 C650 268, 666 244, 690 248 C680 270, 676 284, 666 298 Z M666 298 C698 296, 712 318, 700 340 C682 326, 672 314, 666 298 Z M666 298 C648 324, 620 322, 612 300 C636 296, 652 298, 666 298 Z" fill="var(--comp-2)"/></g>
+                <circle cx="666" cy="298" r="12" fill="var(--chip)"/>
+              </g>
+              <g>
+                <rect class="hl" x="600" y="404" width="132" height="132" rx="12" fill="var(--comp)"/>
+                <g class="spin"><circle cx="666" cy="470" r="58" fill="none"/>
+                  <path d="M666 470 C650 440, 666 416, 690 420 C680 442, 676 456, 666 470 Z M666 470 C698 468, 712 490, 700 512 C682 498, 672 486, 666 470 Z M666 470 C648 496, 620 494, 612 472 C636 468, 652 470, 666 470 Z" fill="var(--comp-2)"/></g>
+                <circle cx="666" cy="470" r="12" fill="var(--chip)"/>
+              </g>
+            </g>
+
+            <!-- power cables (behind the parts, drawn as overlays for the journey) -->
+            <path class="cable" id="cable-24" d="M420 622 C420 560, 520 520, 520 400 C520 300, 500 260, 488 250"/>
+            <path class="cable" id="cable-gpu" d="M380 622 C380 590, 530 590, 530 470 C530 400, 510 380, 500 366"/>
+            <path class="cable" id="cable-eps" d="M60 622 C30 600, 30 120, 30 40 C30 26, 100 26, 120 44"/>
+
+            <!-- PSU -->
+            <g class="part" data-part="psu" tabindex="0" role="button" aria-label="Power supply">
+              <rect class="hl" x="36" y="622" width="410" height="168" rx="8" fill="var(--comp)"/>
+              <circle cx="190" cy="706" r="64" fill="var(--chip)"/>
+              <g fill="none" stroke="var(--comp-2)" stroke-width="2"><circle cx="190" cy="706" r="54"/><circle cx="190" cy="706" r="40"/><circle cx="190" cy="706" r="26"/><path d="M136 706 H244M190 652 V760"/></g>
+              <rect x="290" y="650" width="132" height="64" rx="4" fill="var(--case)"/>
+              <text x="356" y="676" text-anchor="middle" style="font: 600 15px var(--f-display); fill: var(--ink)">850 W</text>
+              <text x="356" y="698" text-anchor="middle" style="font: 500 10.5px var(--f-mono); fill: var(--muted)">80 PLUS GOLD</text>
+              <g fill="var(--chip)"><rect x="300" y="736" width="22" height="30" rx="2"/><rect x="330" y="736" width="22" height="30" rx="2"/><rect x="360" y="736" width="22" height="30" rx="2"/><rect x="390" y="736" width="22" height="30" rx="2"/></g>
+            </g>
+
+            <!-- HDD -->
+            <g class="part" data-part="hdd" tabindex="0" role="button" aria-label="Hard disk drive">
+              <rect x="480" y="624" width="244" height="168" rx="6" fill="var(--case)" stroke="var(--line)"/>
+              <rect class="hl" x="496" y="638" width="212" height="142" rx="8" fill="var(--metal)"/>
+              <circle cx="580" cy="709" r="58" fill="var(--comp-2)"/>
+              <g class="spin fast"><circle cx="580" cy="709" r="58" fill="none"/><path d="M580 709 L580 655" stroke="var(--metal)" stroke-width="1.5" opacity=".6"/></g>
+              <circle cx="580" cy="709" r="10" fill="var(--metal)"/>
+              <path d="M690 762 L612 694" stroke="var(--chip)" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="690" cy="762" r="9" fill="var(--chip)"/>
+            </g>
+
+            <!-- labels -->
+            <g class="labels">
+              <text class="lbl" x="255" y="90" text-anchor="middle">CPU COOLER</text>
+              <text class="lbl" x="255" y="250" text-anchor="middle">CPU</text>
+              <text class="lbl" x="404" y="62" text-anchor="middle">RAM</text>
+              <text class="lbl" x="225" y="344" text-anchor="middle">NVMe SSD</text>
+              <text class="lbl" x="310" y="400" text-anchor="middle">GRAPHICS CARD</text>
+              <text class="lbl" x="419" y="560" text-anchor="middle">CHIPSET</text>
+              <text class="lbl" x="230" y="534">CMOS</text>
+              <text class="lbl" x="268" y="502">MOTHERBOARD</text>
+              <text class="lbl" x="666" y="222" text-anchor="middle">FAN</text>
+              <text class="lbl" x="190" y="644" text-anchor="middle">PSU</text>
+              <text class="lbl" x="644" y="660" text-anchor="middle">HDD</text>
+            </g>
+
+            <g id="frames"></g>
+            <g id="packet-layer"></g>
+          </svg>
+        </div>
+        <div class="figbar">
+          <p class="hoverline" id="hoverline">Tap any part of the cutaway.</p>
+          <label class="toggle" for="labels-toggle"><input type="checkbox" id="labels-toggle" checked> Labels</label>
+        </div>
+      </div>
+
+      <!-- Explore -->
+      <div class="panel" id="panel-explore"></div>
+
+      <!-- Journey -->
+      <div class="panel" id="panel-journey" hidden></div>
+
+      <!-- Priorities -->
+      <div class="panel" id="panel-priorities" hidden></div>
+    </section>
+
+    <!-- Speed -->
+    <section class="wide" id="view-speed" hidden></section>
+
+    <!-- Quiz -->
+    <section class="wide" id="view-quiz" hidden></section>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- Content ---------------- */
+  const PARTS = {
+    cpu: {
+      name: "CPU", full: "Central Processing Unit", group: "Compute",
+      analogy: "The <b>head chef</b>. It reads the recipe (your program) one step at a time and does each step absurdly fast.",
+      how: [
+        "A CPU is a slab of silicon holding tens of billions of transistors, tiny switches that turn on and off to represent 1s and 0s. Grouped together, they form circuits that add, compare, and move numbers.",
+        "Every program is a long list of simple instructions like “load this number”, “add these two”, “jump if zero”. A clock ticks billions of times per second, and each tick pushes instructions forward through the chip."
+      ],
+      steps: ["Fetch the next instruction from memory (usually from its own cache).", "Decode it to work out what it asks for.", "Execute it in an arithmetic or logic unit.", "Write the result back to a register or memory, then repeat."],
+      stepsTitle: "The instruction cycle",
+      specs: [
+        ["Cores", "6–24", "Independent workers. More cores help with rendering, compiling and multitasking."],
+        ["Clock speed", "3.0–6.0 GHz", "Billions of cycles per second. 5 GHz means 5,000,000,000 ticks every second."],
+        ["L3 cache", "16–128 MB", "Ultra-fast memory on the chip itself. A bigger cache means fewer slow trips to RAM."],
+        ["Power (TDP)", "65–250 W", "How much heat the cooler has to remove under load."],
+        ["Socket", "AM5 · LGA 1851", "The physical connector. It must match the motherboard."]
+      ],
+      tip: "For gaming, per-core speed and cache matter more than core count once you have about 8 cores. For video rendering and code compiling, more cores pay off directly.",
+      myth: ["A higher GHz number is always faster.", "Newer designs do more work per clock tick (called IPC). A 5 GHz chip from today can easily beat a 5 GHz chip from a few years ago."],
+      links: ["ram", "gpu", "ssd", "chipset", "cooler", "motherboard"]
+    },
+    cooler: {
+      name: "CPU cooler", full: "Heatsink, heat pipes and fan", group: "Cooling",
+      analogy: "A <b>radiator for the chip</b>. It drags heat out of the CPU and spreads it over a huge metal surface where air can carry it away.",
+      how: [
+        "Almost every watt a CPU uses turns into heat, all of it concentrated in a chip the size of a postage stamp. Without a cooler it would hit its safety limit within seconds and slow itself down (throttle).",
+        "A thin layer of thermal paste fills the microscopic gaps between the CPU's metal lid and the cooler's base, since air trapped there is a terrible conductor."
+      ],
+      steps: ["Heat flows from the CPU into the cooler's copper base.", "Copper heat pipes hold a little liquid at low pressure. It boils at the hot end, even at 40 °C.", "The vapour rushes to the cool fins, condenses, and releases its heat.", "The liquid wicks back to the base, and a fan blows air through the fins."],
+      stepsTitle: "Inside a heat pipe",
+      specs: [
+        ["Type", "Air tower · AIO liquid", "AIO coolers pump liquid to a radiator. Air towers use heat pipes and fins."],
+        ["Fan size", "120 · 140 mm", "Bigger fans move the same air at lower, quieter speeds."],
+        ["Radiator", "240 · 280 · 360 mm", "For AIOs, a longer radiator means more surface area."],
+        ["Safe limit", "≈ 95–105 °C", "The temperature at which CPUs start throttling to protect themselves."],
+        ["Noise", "20–40 dBA", "20 dBA is a whisper. 40 dBA is a quiet library."]
+      ],
+      tip: "Use a pea-sized dot of thermal paste in the centre. Mounting pressure spreads it evenly. More paste doesn't cool better.",
+      myth: ["Liquid cooling always runs cooler than air.", "A good dual-tower air cooler matches most 240 mm AIOs, with no pump to wear out."],
+      links: ["cpu", "fans"]
+    },
+    ram: {
+      name: "RAM", full: "Random Access Memory (DDR5)", group: "Memory",
+      analogy: "The chef's <b>countertop</b>. Everything you're working on right now sits within arm's reach. Clear the counter and it's gone.",
+      how: [
+        "Each bit in RAM is stored as a tiny electrical charge in a capacitor, guarded by one transistor. Charged means 1, empty means 0. Billions of these cells sit in grids of rows and columns.",
+        "The charge leaks away, so the memory refreshes every row every few tens of milliseconds. That's why RAM is volatile: cut the power and everything disappears. Programs are loaded from storage into RAM because RAM is roughly a thousand times quicker to reach."
+      ],
+      specs: [
+        ["Capacity", "16–64 GB", "How much can be open at once. 32 GB is comfortable for gaming plus a browser."],
+        ["Speed", "DDR5-6000", "6,000 million transfers per second, per pin."],
+        ["Latency", "CL30", "Clock cycles before data comes back after a request. Lower is better."],
+        ["Bandwidth", "≈ 96 GB/s", "Dual-channel DDR5-6000: 6,000 MT/s × 8 bytes × 2 channels."],
+        ["Channels", "Dual", "Two sticks let the CPU talk to two memory lanes at once."]
+      ],
+      tip: "Install two sticks in the slots your manual marks (usually A2 and B2), then turn on EXPO or XMP in the BIOS. Without it, RAM runs at a slower default speed.",
+      myth: ["More RAM makes a PC faster.", "Extra RAM only helps if you were running out. Past that, it sits empty. Speed and latency matter more."],
+      links: ["cpu", "motherboard", "ssd"]
+    },
+    gpu: {
+      name: "Graphics card", full: "GPU · Graphics Processing Unit", group: "Compute",
+      analogy: "A <b>stadium full of painters</b>. Each one only knows simple brushstrokes, but there are thousands of them working on the same picture at once.",
+      how: [
+        "A 4K screen has 8.3 million pixels and each one needs its colour worked out, often 60 to 240 times a second. Each pixel's maths is mostly independent of its neighbours, so instead of a few fast cores like a CPU, a GPU has thousands of simpler cores working in parallel.",
+        "The card has its own memory (VRAM) right next to the chip, holding textures, 3D models and the frame being drawn. The same parallel design is why GPUs run AI models: neural networks are mostly huge grids of multiplications."
+      ],
+      steps: ["The CPU sends draw commands: which objects, where, from which camera.", "The GPU transforms each 3D vertex into a position on screen.", "Rasterising turns triangles into the pixels they cover.", "Shaders compute lighting and colour for every pixel, then the frame goes to the monitor."],
+      stepsTitle: "Drawing one frame",
+      specs: [
+        ["VRAM", "8–32 GB", "GDDR6 or GDDR7. Holds textures. Running out causes stutter."],
+        ["Shader cores", "2,000–21,000+", "The parallel workers. Brands call them CUDA cores or stream processors."],
+        ["Power", "120–575 W", "Often the hungriest part. High-end cards use a 12V-2x6 connector."],
+        ["Interface", "PCIe 5.0 x16", "16 lanes to the CPU, about 64 GB/s each way."],
+        ["Frame budget", "6.9 ms @ 144 Hz", "1,000 ms ÷ 144 frames. Miss it and the frame rate drops."]
+      ],
+      tip: "Match the card to your monitor. 1080p gaming needs far less than 1440p at high refresh rates or 4K. Check the card's length against your case.",
+      myth: ["More VRAM means a faster card.", "VRAM is capacity, not speed. A card with 16 GB can be slower than one with 12 GB. You only need enough to avoid running out."],
+      links: ["cpu", "psu", "motherboard", "fans"]
+    },
+    motherboard: {
+      name: "Motherboard", full: "Mainboard / logic board", group: "Foundation",
+      analogy: "The <b>city's road network</b>. Every part plugs into it, and it carries power and data between all of them.",
+      how: [
+        "It's a printed circuit board of 6 to 10 stacked layers of fibreglass, each etched with copper traces, the roads that signals travel on. High-speed lines like PCIe and memory traces are routed to exact lengths so signals arrive in sync.",
+        "Around the CPU socket, the VRM (voltage regulator module) converts the PSU's 12 volts into the roughly 1.1 V the CPU needs, adjusting thousands of times a second. A firmware chip holds the UEFI/BIOS, the first code that runs at power-on: it checks the hardware and hands off to your operating system."
+      ],
+      specs: [
+        ["Form factor", "ATX · mATX · ITX", "305×244 mm, 244×244 mm, 170×170 mm. Must fit your case."],
+        ["Socket", "AM5 · LGA 1851", "Decides which CPUs fit."],
+        ["Chipset", "B / X / Z series", "Decides extra lanes, overclocking and USB counts."],
+        ["M.2 slots", "2–5", "How many NVMe SSDs you can mount directly."],
+        ["VRM", "8–20+ phases", "More phases share the load and run cooler for high-power CPUs."]
+      ],
+      tip: "Pick by features you'll actually use: enough M.2 slots, the USB ports you need, Wi-Fi if you don't have ethernet. A pricier board rarely adds speed.",
+      myth: ["An expensive motherboard gives more FPS.", "With the same CPU, RAM and GPU, performance is nearly identical across boards. The extra money buys features and power headroom."],
+      links: ["cpu", "ram", "gpu", "ssd", "chipset", "cmos", "psu"]
+    },
+    ssd: {
+      name: "NVMe SSD", full: "Solid-state drive, M.2 form factor", group: "Storage",
+      analogy: "The <b>pantry</b>. Everything is kept here permanently. It's much slower to reach than the countertop, but nothing is lost when the lights go off.",
+      how: [
+        "SSDs store data in NAND flash. Each cell traps electrons in an insulated layer, and the amount of trapped charge encodes bits. TLC cells store 3 bits by telling 8 charge levels apart; QLC stores 4 bits with 16 levels.",
+        "There are no moving parts, so any piece of data can be reached in tens of microseconds. A controller chip spreads writes across all the cells (wear levelling), because each cell survives only a limited number of erase cycles. NVMe drives talk to the CPU directly over 4 PCIe lanes."
+      ],
+      specs: [
+        ["Capacity", "1–4 TB", "Modern games often take 100 GB or more each."],
+        ["Read speed", "3,500 / 7,000 / 14,000 MB/s", "Typical for PCIe Gen 3, Gen 4 and Gen 5 drives."],
+        ["Endurance", "≈ 600 TBW per TB", "Terabytes you can write before wear-out. Decades of normal use."],
+        ["Size", "M.2 2280", "22 mm wide, 80 mm long. The most common stick size."],
+        ["Access time", "≈ 50 µs", "About 150 times quicker than a hard drive."]
+      ],
+      tip: "Put your operating system and games on an NVMe SSD. A Gen 4 drive is the value sweet spot. Gen 5 only helps with very large file copies.",
+      myth: ["A Gen 5 SSD makes games load twice as fast.", "Load times barely change past Gen 3. The CPU has to unpack the data, and that becomes the bottleneck."],
+      links: ["cpu", "ram", "motherboard"]
+    },
+    hdd: {
+      name: "Hard disk drive", full: "HDD · spinning magnetic storage", group: "Storage",
+      analogy: "A <b>record player that can write</b>. A needle-like head swings across spinning discs to find your data.",
+      how: [
+        "Inside are glass or aluminium platters coated with a magnetic film, spinning at 7,200 RPM, 120 times a second. Bits are tiny regions magnetised one way or the other.",
+        "A read/write head on a swinging arm flies a few nanometres above the surface on a cushion of air, closer than a fingerprint is thick. To fetch data, the arm swings to the right track and waits for the right spot to spin underneath. That mechanical wait is why HDDs are slow at random access."
+      ],
+      specs: [
+        ["Capacity", "4–30+ TB", "The cheapest storage per terabyte by far."],
+        ["Spindle speed", "5,400 · 7,200 RPM", "Faster spin means less waiting for the data to come round."],
+        ["Sequential speed", "150–280 MB/s", "Fine for big files read in order."],
+        ["Seek time", "≈ 8–10 ms", "The time to swing the arm and find data. About 160× slower than an SSD."],
+        ["Interface", "SATA III", "6 Gb/s, connected through the chipset."]
+      ],
+      tip: "Use hard drives for backups, photo archives and media libraries, never for your operating system. Don't move a PC while a hard drive is spinning.",
+      myth: ["Hard drives are obsolete.", "For bulk storage they still cost a fraction of an SSD per terabyte, which is why data centres use millions of them."],
+      links: ["chipset", "psu", "motherboard"]
+    },
+    psu: {
+      name: "Power supply", full: "PSU · switched-mode power supply", group: "Power",
+      analogy: "The <b>building's electrical substation</b>. It takes rough, high-voltage power from the wall and turns it into steady, low voltages the parts can use.",
+      how: [
+        "Wall power is AC at 120 or 230 volts, flipping direction 50 or 60 times a second. PC parts need smooth DC at 12 V, 5 V and 3.3 V. Most of the load, CPU and GPU included, runs on 12 V.",
+        "Every watt lost in conversion becomes heat, which is why efficiency ratings matter."
+      ],
+      steps: ["Rectify the incoming AC into high-voltage DC.", "Switch it on and off tens of thousands of times a second.", "A small transformer steps that high-frequency power down safely.", "Rectify and filter again into clean 12 V, 5 V and 3.3 V rails."],
+      stepsTitle: "AC to DC in four stages",
+      specs: [
+        ["Wattage", "650–1,000 W", "Maximum it can deliver. Size it for about 1.5× your real load."],
+        ["Efficiency", "80 PLUS Gold ≈ 90%", "At 50% load, 90% reaches the parts and 10% becomes heat."],
+        ["Main connector", "24-pin ATX", "Powers the motherboard."],
+        ["CPU connector", "8-pin EPS", "Feeds the VRM that powers the CPU."],
+        ["GPU connector", "12V-2x6 · 8-pin PCIe", "12V-2x6 carries up to 600 W in a single plug."]
+      ],
+      tip: "Don't cheap out here. A failing PSU can take other parts with it. Choose a reputable brand, enough headroom for your GPU, and ATX 3.x support for modern cards.",
+      myth: ["A 1,000 W PSU uses 1,000 W from the wall.", "The PC pulls only what its parts need. A 1,000 W unit powering a 400 W load draws about 440 W."],
+      links: ["motherboard", "gpu", "cpu", "hdd", "ssd"]
+    },
+    fans: {
+      name: "Case fans", full: "Intake and exhaust airflow", group: "Cooling",
+      analogy: "The <b>building's ventilation</b>. Cool air in at the front, warm air out the back and top.",
+      how: [
+        "Coolers only move heat from a chip into the air inside the case. Case fans swap that warm air for fresh room air. Without them, the inside gets hotter and every cooler works harder.",
+        "A typical layout pulls air in through the front and pushes it out at the rear and top, since hot air naturally rises. Slightly more intake than exhaust (positive pressure) means air leaves through every gap, so dust only enters through the filters."
+      ],
+      specs: [
+        ["Size", "120 · 140 mm", "Larger fans move more air at lower, quieter speeds."],
+        ["Airflow", "40–80 CFM", "Cubic feet of air per minute in open air."],
+        ["Static pressure", "1–3 mmH₂O", "How well the fan pushes through filters and radiators."],
+        ["Speed", "500–2,000 RPM", "Controlled by the motherboard to follow temperatures."],
+        ["Control", "4-pin PWM", "Speed control via a 25 kHz pulse signal."]
+      ],
+      tip: "Set a fan curve in the BIOS so fans stay quiet at idle and ramp up under load. Clean the dust filters every few months.",
+      myth: ["More fans are always better.", "Past 3 to 5 well-placed fans, temperatures barely drop. Mostly you get more noise."],
+      links: ["cooler", "gpu", "psu"]
+    },
+    chipset: {
+      name: "Chipset", full: "Platform controller hub", group: "Foundation",
+      analogy: "A <b>switchboard operator</b>. It handles all the slower lines (USB, SATA, extra slots) and patches them through to the CPU.",
+      how: [
+        "The CPU has a limited number of direct connections, called PCIe lanes. They go to the graphics card, the first SSD and RAM. Everything else (most USB ports, SATA drives, network chips, extra M.2 slots, audio) hangs off the chipset.",
+        "The chipset bundles all that traffic over one link to the CPU, a PCIe 4.0 x4 link on AMD or DMI on Intel. It's a shared highway, so devices on the chipset can slow each other down when they're all busy at once."
+      ],
+      specs: [
+        ["Uplink", "PCIe 4.0 x4 · DMI x8", "The single highway to the CPU, ≈ 8–16 GB/s."],
+        ["USB ports", "6–14", "Most of your rear USB ports run through it."],
+        ["SATA ports", "4–8", "For hard drives and 2.5″ SSDs."],
+        ["Extra lanes", "4–24 PCIe", "For extra M.2 slots, Wi-Fi and network chips."],
+        ["Heat", "≈ 6–15 W", "Why it sits under a small heatsink."]
+      ],
+      tip: "Check which M.2 slot is wired to the CPU and which goes through the chipset. Put your main drive in the CPU-connected one.",
+      myth: ["The chipset makes the CPU faster.", "It decides features and connectivity, such as how many ports you get and whether overclocking is unlocked. It doesn't change the CPU's own speed."],
+      links: ["cpu", "hdd", "motherboard"]
+    },
+    cmos: {
+      name: "CMOS battery", full: "CR2032 coin cell", group: "Foundation",
+      analogy: "A <b>wristwatch battery</b> for the motherboard. It keeps the clock running while the PC is unplugged.",
+      how: [
+        "A small 3-volt coin cell powers the real-time clock, a tiny quartz timekeeper that knows the date and time even with the PC unplugged. On many boards it also keeps your BIOS settings alive.",
+        "It draws only microamps, so one battery lasts 3 to 10 years. Removing it for a minute is a classic way to reset BIOS settings to factory defaults."
+      ],
+      specs: [
+        ["Type", "CR2032", "20 mm across, 3.2 mm thick. Sold everywhere."],
+        ["Voltage", "3 V", "Lithium coin cell."],
+        ["Lifespan", "3–10 years", "Longer when the PC stays plugged in."],
+        ["Draw", "Microamps", "It only runs the clock circuit."],
+        ["Failure sign", "Clock resets", "Wrong date or lost settings after every unplug."]
+      ],
+      tip: "If your PC's clock resets every time you unplug it, swap the coin cell. It's a cheap, two-minute fix.",
+      myth: ["A dead CMOS battery will stop the PC from working.", "The PC still boots. You'll just lose the time and settings whenever power is cut."],
+      links: ["motherboard"]
+    }
+  };
+  const ORDER = ["cpu", "cooler", "ram", "gpu", "motherboard", "ssd", "hdd", "psu", "fans", "chipset", "cmos"];
+
+  const JOURNEY = [
+    { t: "0 ms", title: "You click “Play”", parts: ["motherboard", "chipset", "cpu"], path: ["#io", "chipset", "cpu"],
+      body: "Your mouse sends a USB packet through the rear I/O ports. The chipset receives it and forwards it to the CPU, which raises an interrupt: “the user clicked here”.",
+      fact: "USB gaming mice report their position up to 1,000–8,000 times per second." },
+    { t: "1 ms", title: "Find the game on disk", parts: ["cpu", "ssd"], path: ["cpu", "ssd"],
+      body: "The operating system works out which files make up the game and asks the NVMe SSD for them. The drive is wired straight to the CPU over 4 PCIe lanes, with no detour through the chipset.",
+      fact: "A Gen 4 NVMe drive can stream about 7 GB every second." },
+    { t: "0.5 s", title: "Load it into RAM", parts: ["ssd", "cpu", "ram"], path: ["ssd", "cpu", "ram"],
+      body: "Gigabytes of code, maps and sounds flow from the SSD, through the CPU's built-in memory controller, into RAM. Now it's within quick reach instead of sitting in the slow pantry.",
+      fact: "RAM answers in about 80 ns. The SSD needs about 50,000 ns." },
+    { t: "Every cycle", title: "Run the code", parts: ["ram", "cpu", "cooler"], path: ["ram", "cpu", "ram", "cpu"],
+      body: "The CPU copies the instructions it needs into its on-chip cache and runs them: game logic, physics, AI and sound. All that switching makes heat, which the cooler's heat pipes carry to the fins.",
+      fact: "At 5 GHz, one clock cycle lasts 0.2 nanoseconds." },
+    { t: "Each frame", title: "Hand off to the GPU", parts: ["cpu", "gpu"], path: ["ram", "cpu", "gpu"],
+      body: "The CPU decides what's in the scene and sends draw commands to the graphics card over 16 PCIe lanes. Textures and models move once into the card's VRAM and stay there.",
+      fact: "PCIe 5.0 x16 moves about 64 GB/s in each direction." },
+    { t: "6.9 ms", title: "Draw it and send it to the screen", parts: ["gpu"], path: ["gpu", "#gpu-out"],
+      body: "Thousands of GPU cores shade millions of pixels in parallel. The finished frame goes out the DisplayPort or HDMI connector on the card's bracket, then the next frame starts.",
+      fact: "At 144 Hz the GPU has 1,000 ÷ 144 ≈ 6.9 ms per frame." },
+    { t: "Autosave", title: "Archive a screenshot", parts: ["cpu", "chipset", "hdd"], path: ["cpu", "chipset", "hdd"],
+      body: "You save a screenshot to your archive drive. The data takes the slower road: CPU to chipset, then over SATA to the spinning hard disk, which has to move its arm into place first.",
+      fact: "An HDD seek takes about 8 ms, longer than an entire 144 Hz frame." },
+    { t: "Always", title: "Power and airflow", parts: ["psu", "fans", "motherboard", "gpu"], path: ["psu", "#atx24", "psu", "#gpu-pwr"], cables: true,
+      body: "Throughout all of this, the PSU turns wall AC into steady 12 V, 5 V and 3.3 V, feeding the motherboard, CPU and GPU through separate cables. The case fans pull cool air in at the front and push warm air out the back.",
+      fact: "A gaming PC under load typically draws 300–600 W from the wall." }
+  ];
+
+  const USES = {
+    gaming: { label: "Gaming",
+      summary: "The graphics card decides most of your frame rate. A fast CPU keeps it fed, which matters most at 1080p and high refresh rates.",
+      s: { gpu: 5, cpu: 4, ram: 3, ssd: 3, cooler: 3, psu: 3, fans: 3, motherboard: 2, hdd: 1, chipset: 1, cmos: 1 },
+      why: { gpu: "Draws every frame", cpu: "Runs game logic", ram: "32 GB is plenty", ssd: "Faster load times", psu: "Must feed the GPU" } },
+    creative: { label: "Video & 3D",
+      summary: "Rendering and encoding use every core you have, and long timelines need lots of RAM. The GPU speeds up effects, encoding and 3D viewports.",
+      s: { cpu: 5, ram: 5, gpu: 4, ssd: 4, cooler: 4, hdd: 3, psu: 3, fans: 3, motherboard: 2, chipset: 2, cmos: 1 },
+      why: { cpu: "Renders use all cores", ram: "64 GB for 4K timelines", gpu: "Effects and encoding", ssd: "Scrubbing raw footage", hdd: "Cheap footage archive", cooler: "Long full loads" } },
+    office: { label: "Office & study",
+      summary: "An SSD and 16 GB of RAM make the biggest difference to how snappy it feels. The graphics built into the CPU are plenty.",
+      s: { ssd: 4, ram: 3, cpu: 2, psu: 2, gpu: 1, hdd: 1, cooler: 1, fans: 1, motherboard: 1, chipset: 1, cmos: 1 },
+      why: { ssd: "Instant boot and apps", ram: "Many browser tabs", cpu: "Any modern 6-core", gpu: "Integrated is enough" } },
+    code: { label: "Programming",
+      summary: "Compiling spreads across all your cores, and IDEs, browsers and containers eat RAM. Fast storage speeds up builds full of small files.",
+      s: { cpu: 4, ram: 4, ssd: 4, cooler: 3, gpu: 2, psu: 2, fans: 2, motherboard: 2, hdd: 1, chipset: 1, cmos: 1 },
+      why: { cpu: "Parallel builds", ram: "Containers and IDEs", ssd: "Thousands of small files", cooler: "Sustained compiles" } },
+    ai: { label: "Local AI",
+      summary: "The GPU's VRAM decides which models fit at all, and its speed sets how fast they answer. Big models also need plenty of system RAM and a strong PSU.",
+      s: { gpu: 5, ram: 4, psu: 4, ssd: 3, cpu: 3, cooler: 3, fans: 3, motherboard: 2, hdd: 2, chipset: 1, cmos: 1 },
+      why: { gpu: "VRAM limits model size", ram: "Overflow for big models", psu: "Hours at full GPU power", ssd: "Models are 5–100 GB" } }
+  };
+
+  const SPEED = [
+    { name: "One CPU cycle", real: "0.3 ns", ns: 0.3 },
+    { name: "L1 cache", real: "≈ 1 ns", ns: 1 },
+    { name: "L2 cache", real: "≈ 4 ns", ns: 4 },
+    { name: "L3 cache", real: "≈ 12 ns", ns: 12 },
+    { name: "RAM", real: "≈ 80 ns", ns: 80 },
+    { name: "NVMe SSD", real: "≈ 50 µs", ns: 50e3 },
+    { name: "SATA SSD", real: "≈ 100 µs", ns: 100e3 },
+    { name: "Hard disk", real: "≈ 8 ms", ns: 8e6 },
+    { name: "Internet, NY ↔ London", real: "≈ 70 ms", ns: 70e6 }
+  ];
+
+  const QUIZ = [
+    { q: "Which part holds the data your programs are using right now, but forgets everything when the power goes off?",
+      o: ["SSD", "RAM", "CMOS battery", "Hard disk"], a: 1,
+      e: "<b>RAM</b> stores bits as tiny charges that leak away, so it has to keep refreshing. With no power it can't refresh, and the data is gone. That's why work is saved to an SSD." },
+    { q: "Why does a graphics card have thousands of cores when a CPU has only a handful?",
+      o: ["GPU cores are each faster than CPU cores", "Each pixel can be calculated independently, all at the same time", "GPUs need cores to store textures", "It saves electricity"], a: 1,
+      e: "Graphics is <b>massively parallel</b>: millions of pixels, each needing similar maths. Thousands of simple cores beat a few complex ones for that job." },
+    { q: "What does a power supply mainly do?",
+      o: ["Stores energy in case of a blackout", "Converts wall AC into low-voltage DC", "Boosts voltage so the CPU runs faster", "Cools the components"], a: 1,
+      e: "The PSU turns <b>120/230 V AC into 12 V, 5 V and 3.3 V DC</b>. Blackout protection is the job of a separate UPS." },
+    { q: "Your monitor runs at 144 Hz. About how long does the GPU have to draw each frame?",
+      o: ["144 ms", "14.4 ms", "6.9 ms", "0.69 ms"], a: 2,
+      e: "1,000 ms ÷ 144 frames ≈ <b>6.9 ms</b>. If a frame takes longer, the frame rate drops below 144." },
+    { q: "What's the job of thermal paste?",
+      o: ["It glues the cooler to the CPU", "It fills microscopic air gaps between the CPU and the cooler", "It's a coolant that evaporates", "It insulates the CPU from static"], a: 1,
+      e: "Even polished metal is rough up close. The paste fills the <b>tiny gaps where air would trap heat</b>, so heat flows into the cooler." },
+    { q: "Which of these takes longest to fetch one small piece of data?",
+      o: ["L3 cache", "RAM", "NVMe SSD", "Hard disk"], a: 3,
+      e: "The <b>hard disk</b> must swing its arm and wait for the platter to spin round, about 8 ms. That's roughly 100,000 times longer than RAM." },
+    { q: "A PC's parts need 400 W. It has a 1,000 W power supply. How much does it draw from the wall?",
+      o: ["About 1,000 W", "About 440 W", "Exactly 400 W", "About 1,400 W"], a: 1,
+      e: "The PC draws <b>what it needs plus conversion losses</b>. At about 90% efficiency, that's around 440 W. Wattage is a ceiling, not a constant draw." },
+    { q: "Your mouse, SATA hard drive and most USB ports connect to the CPU through…",
+      o: ["The chipset", "The GPU", "The VRM", "The RAM"], a: 0,
+      e: "The <b>chipset</b> collects slower devices and passes their traffic to the CPU over one shared link." },
+    { q: "Your PC's clock resets to 2009 every time you unplug it. What's the likely fix?",
+      o: ["A new power supply", "Reinstall the operating system", "Replace the CMOS coin battery", "Add more RAM"], a: 2,
+      e: "The <b>CR2032 CMOS battery</b> keeps the real-time clock running without wall power. When it dies, the time resets." },
+    { q: "Why are programs loaded from the SSD into RAM before they run?",
+      o: ["The SSD can't run code", "RAM is about a thousand times quicker for the CPU to reach", "RAM has more space", "To save SSD wear"], a: 1,
+      e: "RAM answers in about 80 nanoseconds and an SSD in about 50,000. <b>Keeping working data close</b> keeps the CPU from waiting." }
+  ];
+
+  /* ---------------- Helpers ---------------- */
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const svg = $("#diagram");
+  const NS = "http://www.w3.org/2000/svg";
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function partEl(id) { return svg.querySelector('.part[data-part="' + id + '"]'); }
+  function bbox(ref) {
+    const el = ref.startsWith("#") ? svg.querySelector(ref) : partEl(ref);
+    if (!el) return null;
+    if (ref === "motherboard") return { x: 60, y: 40, width: 440, height: 530 };
+    if (ref === "fans") return { x: 24, y: 60, width: 708, height: 476 };
+    return el.getBBox();
+  }
+  function center(ref) {
+    const b = bbox(ref);
+    if (ref === "fans") return { x: 666, y: 298 };
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  }
+
+  function setFrames(ids) {
+    const g = $("#frames");
+    g.innerHTML = "";
+    ids.forEach((id) => {
+      let boxes = [];
+      if (id === "fans") boxes = [{ x: 24, y: 64, width: 16, height: 122 }, { x: 600, y: 60, width: 132, height: 476 }];
+      else if (id === "ram") boxes = [{ x: 368, y: 70, width: 52, height: 260 }];
+      else { const b = bbox(id); if (b) boxes = [b]; }
+      boxes.forEach((b) => {
+        const p = 6, x = b.x - p, y = b.y - p, w = b.width + 2 * p, h = b.height + 2 * p;
+        const r = document.createElementNS(NS, "rect");
+        r.setAttribute("class", "frame");
+        r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("rx", 4);
+        g.appendChild(r);
+        [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(([cx, cy]) => {
+          const t = document.createElementNS(NS, "rect");
+          t.setAttribute("class", "tick");
+          t.setAttribute("x", cx - 4); t.setAttribute("y", cy - 4); t.setAttribute("width", 8); t.setAttribute("height", 8);
+          g.appendChild(t);
+        });
+      });
+    });
+  }
+  function setOn(ids, dim) {
+    $$(".part", svg).forEach((p) => p.classList.toggle("is-on", ids.includes(p.dataset.part)));
+    svg.classList.toggle("dim", !!dim);
+  }
+
+  /* ---------------- Packet animation ---------------- */
+  let raf = null;
+  function stopPacket() { if (raf) cancelAnimationFrame(raf); raf = null; $("#packet-layer").innerHTML = ""; }
+  function runPacket(refs) {
+    stopPacket();
+    const pts = refs.map(center).filter(Boolean);
+    if (pts.length < 2) return;
+    const layer = $("#packet-layer");
+    const trail = document.createElementNS(NS, "polyline");
+    trail.setAttribute("points", pts.map((p) => p.x + "," + p.y).join(" "));
+    trail.setAttribute("fill", "none"); trail.setAttribute("stroke", "var(--signal)"); trail.setAttribute("stroke-width", "2.5");
+    trail.setAttribute("stroke-dasharray", "2 6"); trail.setAttribute("stroke-linecap", "round");
+    layer.appendChild(trail);
+    pts.forEach((p) => {
+      const c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); c.setAttribute("r", 5);
+      c.setAttribute("fill", "var(--surface)"); c.setAttribute("stroke", "var(--signal)"); c.setAttribute("stroke-width", "2");
+      layer.appendChild(c);
+    });
+    const ring = document.createElementNS(NS, "circle"); ring.setAttribute("class", "packet-ring"); ring.setAttribute("r", 14);
+    const dot = document.createElementNS(NS, "circle"); dot.setAttribute("class", "packet"); dot.setAttribute("r", 8);
+    layer.appendChild(ring); layer.appendChild(dot);
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+      segs.push({ a: pts[i], b: pts[i + 1], len }); total += len;
+    }
+    const place = (p) => { dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y); ring.setAttribute("cx", p.x); ring.setAttribute("cy", p.y); };
+    if (reduceMotion) { place(pts[pts.length - 1]); return; }
+    const dur = Math.max(1400, total * 3.2), pause = 600;
+    let start = null;
+    const tick = (ts) => {
+      if (start === null) start = ts;
+      const el = (ts - start) % (dur + pause);
+      const k = Math.min(1, el / dur);
+      const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      let d = e * total;
+      for (const s of segs) {
+        if (d <= s.len || s === segs[segs.length - 1]) {
+          const t = s.len ? Math.min(1, d / s.len) : 1;
+          place({ x: s.a.x + (s.b.x - s.a.x) * t, y: s.a.y + (s.b.y - s.a.y) * t });
+          break;
+        }
+        d -= s.len;
+      }
+      ring.setAttribute("r", 12 + 4 * Math.sin(ts / 160));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  }
+
+  /* ---------------- Explore ---------------- */
+  let current = "cpu";
+  function renderExplore(id, scroll) {
+    current = id;
+    const p = PARTS[id];
+    const panel = $("#panel-explore");
+    const specs = p.specs.map(([k, v, m]) => `<tr><td>${esc(k)}</td><td class="v">${esc(v)}</td><td class="m">${esc(m)}</td></tr>`).join("");
+    const links = p.links.map((l) => `<button class="chip" data-goto="${l}">${esc(PARTS[l].name)}</button>`).join("");
+    const steps = p.steps ? `<div class="section"><h3>${esc(p.stepsTitle)}</h3><ol class="steps">${p.steps.map((s) => `<li><span>${esc(s)}</span></li>`).join("")}</ol></div>` : "";
+    const index = ORDER.map((k) => `<button class="chip" data-goto="${k}" aria-current="${k === id}">${esc(PARTS[k].name)}</button>`).join("");
+    panel.innerHTML = `
+      <div class="part-head">
+        <span class="eyebrow">${esc(p.group)} · ${esc(p.full)}</span>
+        <h2>${esc(p.name)}</h2>
+        <p class="analogy">${p.analogy}</p>
+      </div>
+      <div class="section"><h3>How it works</h3><div class="how">${p.how.map((t) => `<p>${esc(t)}</p>`).join("")}</div></div>
+      ${steps}
+      <div class="section"><h3>Specs decoded</h3>
+        <div class="table-wrap"><table><thead><tr><th>Spec</th><th>Typical</th><th>What it means</th></tr></thead><tbody>${specs}</tbody></table></div>
+      </div>
+      <div class="notes">
+        <div class="note tip"><span class="k">Buying tip</span><p>${esc(p.tip)}</p></div>
+        <div class="note myth"><span class="k">Myth vs fact</span><p class="myth-claim">${esc(p.myth[0])}</p><p>${esc(p.myth[1])}</p></div>
+      </div>
+      <div class="section"><h3>Connects to</h3><div class="chips">${links}</div></div>
+      <div class="section"><h3>All parts</h3><div class="parts-index">${index}</div></div>`;
+    setFrames([id]);
+    setOn([id], false);
+    if (scroll && window.matchMedia("(max-width: 900px)").matches) panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }
+
+  /* ---------------- Journey ---------------- */
+  let step = 0, playing = false, playTimer = null;
+  function renderJourney() {
+    const s = JOURNEY[step];
+    const panel = $("#panel-journey");
+    panel.innerHTML = `
+      <div class="part-head">
+        <span class="eyebrow">Data journey</span>
+        <h2 style="font-size:26px">What happens when you launch a game</h2>
+        <p class="analogy">Follow the blue packet through the case, one step at a time.</p>
+      </div>
+      <div class="journey-card" aria-live="polite">
+        <span class="eyebrow" style="color:var(--signal)">Step ${step + 1} of ${JOURNEY.length} · ${esc(s.t)}</span>
+        <h2>${esc(s.title)}</h2>
+        <p class="body">${esc(s.body)}</p>
+        <p class="fact">${esc(s.fact)}</p>
+        <div class="chips">${s.parts.map((k) => `<button class="chip" data-goto="${k}">${esc(PARTS[k].name)} <small>open</small></button>`).join("")}</div>
+        <div class="controls">
+          <button class="btn" id="j-prev" ${step === 0 ? "disabled" : ""}>Back</button>
+          <button class="btn primary" id="j-play">${playing ? "Pause" : "Play all"}</button>
+          <button class="btn" id="j-next" ${step === JOURNEY.length - 1 ? "disabled" : ""}>Next</button>
+          <div class="dots">${JOURNEY.map((_, i) => `<button class="dot" data-step="${i}" aria-label="Step ${i + 1}" aria-current="${i === step}"></button>`).join("")}</div>
+        </div>
+      </div>
+      <ol class="timeline">${JOURNEY.map((j, i) => `<li><button data-step="${i}" aria-current="${i === step}"><span class="t">${esc(j.t)}</span><span>${esc(j.title)}</span></button></li>`).join("")}</ol>`;
+    setFrames(s.parts.filter((k) => k !== "motherboard"));
+    setOn(s.parts, true);
+    $$(".cable", svg).forEach((c) => c.classList.toggle("is-on", !!s.cables));
+    runPacket(s.path);
+  }
+  function goStep(i) { step = Math.max(0, Math.min(JOURNEY.length - 1, i)); renderJourney(); }
+  function togglePlay() {
+    playing = !playing;
+    clearInterval(playTimer);
+    if (playing) {
+      if (step === JOURNEY.length - 1) step = 0;
+      playTimer = setInterval(() => {
+        if (step >= JOURNEY.length - 1) { playing = false; clearInterval(playTimer); renderJourney(); return; }
+        goStep(step + 1);
+      }, 5200);
+    }
+    renderJourney();
+  }
+
+  /* ---------------- Priorities ---------------- */
+  let use = "gaming";
+  function renderPriorities() {
+    const u = USES[use];
+    const sorted = ORDER.slice().sort((a, b) => u.s[b] - u.s[a]);
+    $("#panel-priorities").innerHTML = `
+      <div class="part-head">
+        <span class="eyebrow">What matters for…</span>
+        <h2>Where your money goes furthest</h2>
+      </div>
+      <div class="uses">${Object.entries(USES).map(([k, v]) => `<button class="chip" data-use="${k}" aria-pressed="${k === use}">${esc(v.label)}</button>`).join("")}</div>
+      <p class="summary">${esc(u.summary)}</p>
+      <div class="prio">${sorted.map((k) => `
+        <button class="prio-row" data-goto="${k}">
+          <span class="pn">${esc(PARTS[k].name)}</span>
+          <span class="pips" aria-label="${u.s[k]} out of 5">${[1, 2, 3, 4, 5].map((n) => `<span class="pip ${n <= u.s[k] ? "on" : ""}"></span>`).join("")}${u.why[k] ? `<span class="why">${esc(u.why[k])}</span>` : ""}</span>
+        </button>`).join("")}</div>
+      <p class="footnote">The cutaway fades each part by how much it matters for this kind of use. Select a row to read about that part.</p>`;
+    $$(".part", svg).forEach((p) => p.dataset.score = u.s[p.dataset.part] || 1);
+    setFrames(sorted.slice(0, 2));
+  }
+
+  /* ---------------- Speed ---------------- */
+  function human(sec) {
+    const U = [["year", 31557600], ["month", 2629800], ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1]];
+    for (const [n, v] of U) if (sec >= v * 0.95) { const q = sec / v; const r = q >= 10 ? Math.round(q) : Math.round(q * 10) / 10; return r + " " + n + (r === 1 ? "" : "s"); }
+    return sec.toFixed(1) + " s";
+  }
+  function renderSpeed() {
+    const base = SPEED[0].ns;
+    const LO = -0.2, HI = 9;
+    const pos = (sec) => ((Math.log10(sec) - LO) / (HI - LO)) * 100;
+    const ticks = [["1 sec", 1], ["1 min", 60], ["1 hour", 3600], ["1 day", 86400], ["1 month", 2629800], ["1 year", 31557600], ["10 years", 315576000]];
+    const grid = ticks.map(([, v]) => `<span class="grid" style="left:${pos(v)}%"></span>`).join("");
+    const rows = SPEED.map((r) => {
+      const sec = r.ns / base;
+      return `<div class="crow"><div class="name">${esc(r.name)}<small>${esc(r.real)}</small></div>
+        <div class="track">${grid}<span class="bar ${sec > 1000 ? "slow" : ""}" style="width:${Math.max(0.6, pos(sec))}%"></span></div>
+        <div class="human">${human(sec)}</div></div>`;
+    }).join("");
+    $("#view-speed").innerHTML = `
+      <span class="eyebrow">Speed scale</span>
+      <h2>If one CPU tick lasted a second</h2>
+      <p class="lede">Computers wait on data far more than they compute. Stretch time so a single 0.3-nanosecond clock cycle lasts one second, and you can see why the parts are arranged in layers from fast-and-small to slow-and-huge.</p>
+      <div class="chart"><div class="chart-inner">
+        <div class="axis" style="padding:0 0 4px"><span class="name" style="position:static;transform:none;font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Where the data lives</span><span></span><span style="position:static;transform:none;text-align:right;font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">At human scale</span></div>
+        ${rows}
+        <div class="axis"><span></span><div class="scale">${ticks.map(([l, v]) => `<span style="left:${pos(v)}%">${l}</span>`).join("")}</div><span></span></div>
+      </div></div>
+      <div class="notes">
+        <div class="note tip"><span class="k">Why cache exists</span><p>A trip to RAM would leave the CPU idle for over 4 minutes of human time. Three layers of on-chip cache keep the data it's most likely to need within a few seconds' reach.</p></div>
+        <div class="note tip"><span class="k">Why SSDs felt like magic</span><p>Swapping a hard disk for an SSD cuts a 10-month wait down to about 2 days. That jump is why an SSD upgrade makes an old PC feel new.</p></div>
+      </div>
+      <p class="footnote">Log scale: each gridline is a bigger unit of time, not an equal step. Latencies are typical round figures for a modern desktop at about 3.3 GHz. Real numbers vary by model and workload.</p>`;
+  }
+
+  /* ---------------- Quiz ---------------- */
+  let qi = 0, score = 0, answered = false;
+  function renderQuiz() {
+    const v = $("#view-quiz");
+    if (qi >= QUIZ.length) {
+      const pct = Math.round((score / QUIZ.length) * 100);
+      const verdict = pct === 100 ? "Perfect. You could build one blindfolded." : pct >= 70 ? "Solid. You know your way around a case." : pct >= 40 ? "Good start. The Explore tab fills the gaps." : "Have a browse through the parts, then try again.";
+      v.innerHTML = `<span class="eyebrow">Quiz</span><h2>How well do you know the box?</h2>
+        <div class="quiz"><span class="qmeta"><span>Final score</span><span>${pct}%</span></span>
+        <div class="score-big">${score} / ${QUIZ.length}</div><p style="font-size:17px">${verdict}</p>
+        <div class="controls"><button class="btn primary" id="q-restart">Try again</button><button class="btn" data-view-go="explore">Explore the parts</button></div></div>`;
+      return;
+    }
+    const q = QUIZ[qi];
+    v.innerHTML = `<span class="eyebrow">Quiz</span><h2>How well do you know the box?</h2>
+      <div class="quiz">
+        <div class="qmeta"><span>Question ${qi + 1} of ${QUIZ.length}</span><span>Score ${score}</span></div>
+        <div class="progress"><div style="width:${(qi / QUIZ.length) * 100}%"></div></div>
+        <h3>${esc(q.q)}</h3>
+        <div class="opts">${q.o.map((o, i) => `<button class="opt" data-opt="${i}"><span class="letter">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div id="q-after" hidden></div>
+      </div>`;
+    answered = false;
+  }
+  function answer(i) {
+    if (answered) return;
+    answered = true;
+    const q = QUIZ[qi];
+    if (i === q.a) score++;
+    $$(".opt").forEach((b, k) => { b.disabled = true; if (k === q.a) b.classList.add("right"); else if (k === i) b.classList.add("wrong"); });
+    const after = $("#q-after");
+    after.hidden = false;
+    after.innerHTML = `<div style="display:grid;gap:14px"><p class="explain">${i === q.a ? "Correct. " : "Not quite. "}${q.e}</p>
+      <div class="controls"><button class="btn primary" id="q-next">${qi === QUIZ.length - 1 ? "See score" : "Next question"}</button></div></div>`;
+    $("#q-next").focus();
+    $(".qmeta span:last-child").textContent = "Score " + score;
+  }
+
+  /* ---------------- Views ---------------- */
+  const VIEWS = ["explore", "journey", "speed", "priorities", "quiz"];
+  let view = "explore";
+  function show(v, opts) {
+    opts = opts || {};
+    view = v;
+    $$(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === v)));
+    const onStage = ["explore", "journey", "priorities"].includes(v);
+    $("#stage").hidden = !onStage;
+    $("#panel-explore").hidden = v !== "explore";
+    $("#panel-journey").hidden = v !== "journey";
+    $("#panel-priorities").hidden = v !== "priorities";
+    $("#view-speed").hidden = v !== "speed";
+    $("#view-quiz").hidden = v !== "quiz";
+    svg.dataset.mode = v === "priorities" ? "heat" : "";
+    if (v !== "journey") { stopPacket(); playing = false; clearInterval(playTimer); $$(".cable", svg).forEach((c) => c.classList.remove("is-on")); }
+    if (v === "explore") renderExplore(opts.part || current, opts.scroll);
+    if (v === "journey") renderJourney();
+    if (v === "priorities") { setOn([], false); renderPriorities(); }
+    if (v === "speed") renderSpeed();
+    if (v === "quiz") renderQuiz();
+    try { history.replaceState(null, "", "#" + (v === "explore" ? (opts.part || current) : v)); } catch (e) {}
+  }
+
+  /* ---------------- Events ---------------- */
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("button, .part");
+    if (!t) return;
+    if (t.classList.contains("tab")) return show(t.dataset.view);
+    if (t.classList.contains("part")) return show("explore", { part: t.dataset.part, scroll: true });
+    if (t.dataset.goto) return show("explore", { part: t.dataset.goto, scroll: view !== "explore" ? false : true });
+    if (t.dataset.viewGo) return show(t.dataset.viewGo);
+    if (t.dataset.use) { use = t.dataset.use; return renderPriorities(); }
+    if (t.dataset.step) { playing = false; clearInterval(playTimer); return goStep(+t.dataset.step); }
+    if (t.id === "j-prev") { playing = false; clearInterval(playTimer); return goStep(step - 1); }
+    if (t.id === "j-next") { playing = false; clearInterval(playTimer); return goStep(step + 1); }
+    if (t.id === "j-play") return togglePlay();
+    if (t.dataset.opt) return answer(+t.dataset.opt);
+    if (t.id === "q-next") { qi++; return renderQuiz(); }
+    if (t.id === "q-restart") { qi = 0; score = 0; return renderQuiz(); }
+  });
+  svg.addEventListener("keydown", (e) => {
+    const p = e.target.closest(".part");
+    if (p && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); show("explore", { part: p.dataset.part, scroll: true }); }
+  });
+  const hover = $("#hoverline");
+  const defaultHover = "Tap any part of the cutaway.";
+  $$(".part", svg).forEach((p) => {
+    const info = () => { const d = PARTS[p.dataset.part]; hover.innerHTML = `<b>${esc(d.name)}</b> · ${esc(d.analogy.replace(/<[^>]+>/g, "").split(".")[0])}.`; };
+    p.addEventListener("pointerenter", info);
+    p.addEventListener("focus", info);
+    p.addEventListener("pointerleave", () => { hover.textContent = defaultHover; });
+    p.addEventListener("blur", () => { hover.textContent = defaultHover; });
+  });
+  $("#labels-toggle").addEventListener("change", (e) => svg.classList.toggle("labels-off", !e.target.checked));
+
+  /* ---------------- Boot ---------------- */
+  const h = (location.hash || "").slice(1);
+  if (PARTS[h]) show("explore", { part: h });
+  else if (VIEWS.includes(h)) show(h);
+  else show("explore", { part: "cpu" });
+})();
+</script>
+
+</body>
+</html>

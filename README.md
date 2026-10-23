@@ -78,3 +78,22 @@ Plain HTML, CSS, and JavaScript — zero dependencies, zero build step.
 - `styles.css` — styling
 - `data.js` — seed recipes, age stages, and feeding guide content
 - `app.js` — application logic and localStorage persistence
+
+---
+
+## 🖥️ Inside the Case — how PC parts work
+
+A second app lives in [`pc-parts/`](pc-parts/index.html): an interactive cutaway
+of a desktop PC. Tap any part (CPU, cooler, RAM, GPU, motherboard, SSD, HDD,
+PSU, fans, chipset, CMOS battery) to see how it works, its specs decoded, a
+buying tip and a common myth. It also has:
+
+- **Data journey**: an animated, step-by-step walk through what happens inside
+  the case when you launch a game.
+- **Speed scale**: cache, RAM, SSD and hard disk latency stretched to human
+  time (if one CPU tick lasted a second).
+- **What matters**: which parts matter most for gaming, video, office work,
+  programming or local AI.
+- **Quiz**: 10 questions with explanations.
+
+Open `pc-parts/index.html` directly, or visit `/pc-parts/` on the GitHub Pages site.
